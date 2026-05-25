@@ -10,15 +10,15 @@ ingressRoute:
 
 sandboxTemplates:
   sandbox:
-    image: sandbox-runtime:latest
+    image: registry.k8s.io/e2e-test-images/echoserver:2.5
   agent:
-    image: agent-runtime:latest
+    image: registry.k8s.io/e2e-test-images/echoserver:2.5
 
 appConfig:
   log_level: INFO
   postgres:
-    host: mysql.mysql.svc.cluster.local
-    port: 3306
+    host: postgresql.postgresql.svc.cluster.local
+    port: 5432
     username: postgres
     password: "269302"
     database: agenthub

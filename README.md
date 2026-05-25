@@ -9,12 +9,12 @@ helm install agenthub-gateway . \
   --set gateway.image=agenthub-gateway \
   --set gateway.tag=v0.1.0-beta.61 \
   --set ingressRoute.entryPoint=web \
-  --set sandboxTemplates.sandbox.image=sandbox-runtime:latest \
-  --set sandboxTemplates.agent.image=agent-runtime:latest \
-  --set appConfig.postgres.host=mysql.mysql.svc.cluster.local \
-  --set appConfig.postgres.port=3306 \
+  --set sandboxTemplates.sandbox.image=registry.k8s.io/e2e-test-images/echoserver:2.5 \
+  --set sandboxTemplates.agent.image=registry.k8s.io/e2e-test-images/echoserver:2.5 \
+  --set appConfig.postgres.host=postgresql.postgresql.svc.cluster.local \
+  --set appConfig.postgres.port=5432 \
   --set appConfig.postgres.password=agenthub \
-  --set appConfig.sandbox.namespace=agenthub
+  --set appConfig.sandbox.namespace=sandbox
 ```
 
 `appConfig` is rendered as a whole into the shared `config.yaml` ConfigMap and mounted at `/etc/agenthub-gateway/config.yaml`, matching the gateway Docker CMD.

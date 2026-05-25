@@ -7,7 +7,6 @@ metadata:
     {{- include "agenthub-gateway.labels" . | nindent 4 }}
     agent: agent
 spec:
-  service: true
   podTemplate:
     metadata:
       labels:
