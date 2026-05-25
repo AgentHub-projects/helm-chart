@@ -1,0 +1,31 @@
+pullSecret: "aliyun-acr-pull-secret"
+gateway:
+  image: crpi-wxtmmpsv7mbxgdvs.cn-hangzhou.personal.cr.aliyuncs.com/agenthub-dev/gateway
+  tag: "v0.1.0-dev.d98e159"
+  pullPolicy: Always
+  port: 8080
+
+ingressRoute:
+  entryPoint: web
+
+sandboxTemplates:
+  sandbox:
+    image: sandbox-runtime:latest
+  agent:
+    image: agent-runtime:latest
+
+appConfig:
+  log_level: INFO
+  postgres:
+    host: mysql.mysql.svc.cluster.local
+    port: 3306
+    username: postgres
+    password: "269302"
+    database: agenthub
+  sandbox:
+    namespace: sandbox
+    port: 8080
+    poll_interval: 1s
+    selectors:
+      - sandbox
+      - agent

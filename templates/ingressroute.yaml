@@ -1,0 +1,23 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "agenthub-gateway.fullname" . }}
+  labels:
+    {{- include "agenthub-gateway.labels" . | nindent 4 }}
+spec:
+  ingressClassName: traefik
+  entryPoints:
+    - {{ .Values.ingressRoute.entryPoint | default "web" | quote }}
+  routes:
+    - kind: Rule
+      match: PathPrefix(`/socket.io`)
+      services:
+        - kind: Service
+          name: {{ include "agenthub-gateway.fullname" . }}
+          port: {{ .Values.gateway.port }}
+    - kind: Rule
+      match: PathPrefix(`/filesystem`)
+      services:
+        - kind: Service
+          name: {{ include "agenthub-gateway.fullname" . }}
+          port: {{ .Values.gateway.port }}

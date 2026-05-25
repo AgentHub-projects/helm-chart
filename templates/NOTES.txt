@@ -1,0 +1,10 @@
+agenthub-gateway has been deployed.
+
+Service:
+  {{ include "agenthub-gateway.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+
+IngressRoute:
+  Uses Traefik entryPoint {{ .Values.ingressRoute.entryPoint | default "web" }} with routes for /socket.io and /filesystem.
+
+Config:
+  /etc/agenthub-gateway/config.yaml

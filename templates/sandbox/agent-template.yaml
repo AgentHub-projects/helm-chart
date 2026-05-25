@@ -1,0 +1,26 @@
+apiVersion: extensions.agents.x-k8s.io/v1alpha1
+kind: SandboxTemplate
+metadata:
+  name: {{ include "agenthub-gateway.fullname" . }}-agent
+  namespace: {{ include "agenthub-gateway.sandboxNamespace" . }}
+  labels:
+    {{- include "agenthub-gateway.labels" . | nindent 4 }}
+    agent: agent
+spec:
+  service: true
+  podTemplate:
+    metadata:
+      labels:
+        agent: agent
+    spec:
+      {{- if .Values.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.pullSecret }}
+      {{- end }}
+      containers:
+        - name: agent
+          image: {{ .Values.sandboxTemplates.agent.image | quote }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.appConfig.sandbox.port }}
+              protocol: TCP
