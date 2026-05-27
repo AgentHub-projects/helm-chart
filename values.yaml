@@ -1,7 +1,7 @@
 pullSecret: "aliyun-acr-pull-secret"
 gateway:
   image: crpi-wxtmmpsv7mbxgdvs.cn-hangzhou.personal.cr.aliyuncs.com/agenthub-dev/gateway
-  tag: "v0.1.0-dev.d98e159"
+  tag: "v0.1.0-dev.049cd18"
   pullPolicy: Always
   port: 8080
 
@@ -10,12 +10,21 @@ ingressRoute:
 
 sandboxTemplates:
   sandbox:
-    image: registry.k8s.io/e2e-test-images/echoserver:2.5
+    image: registry.aliyuncs.com/google_containers/echoserver:1.10
   agent:
-    image: registry.k8s.io/e2e-test-images/echoserver:2.5
+    image: registry.aliyuncs.com/google_containers/echoserver:1.10
 
 appConfig:
   log_level: INFO
+  agentadaptor:
+    host: "0.0.0.0"
+    port: 8080
+    workspaceRoot: "/workspace"
+    logLevel: info
+    codexApiKey: ""
+    anthropicApiKey: ""
+    codexModel: ""
+    claudeModel: ""
   postgres:
     host: postgresql.postgresql.svc.cluster.local
     port: 5432
@@ -26,6 +35,5 @@ appConfig:
     namespace: sandbox
     port: 8080
     poll_interval: 1s
-    selectors:
-      - sandbox
-      - agent
+    agentselector: agent
+    sandboxselector: sandbox

@@ -12,10 +12,6 @@ spec:
       labels:
         sandbox: sandbox
     spec:
-      {{- if .Values.pullSecret }}
-      imagePullSecrets:
-        - name: {{ .Values.pullSecret }}
-      {{- end }}
       containers:
         - name: sandbox
           image: {{ .Values.sandboxTemplates.sandbox.image | quote }}

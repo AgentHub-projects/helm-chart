@@ -1,3 +1,4 @@
+{{- $agentConfig := .Values.appConfig.agentadaptor | default dict -}}
 apiVersion: extensions.agents.x-k8s.io/v1alpha1
 kind: SandboxTemplate
 metadata:
@@ -12,14 +13,22 @@ spec:
       labels:
         agent: agent
     spec:
-      {{- if .Values.pullSecret }}
-      imagePullSecrets:
-        - name: {{ .Values.pullSecret }}
-      {{- end }}
       containers:
         - name: agent
           image: {{ .Values.sandboxTemplates.agent.image | quote }}
+          env:
+            - name: AGENTADAPTOR_CONFIG_PATH
+              value: /etc/agentadaptor/config.json
           ports:
             - name: http
-              containerPort: {{ .Values.appConfig.sandbox.port }}
+              containerPort: {{ $agentConfig.port | default .Values.appConfig.sandbox.port }}
               protocol: TCP
+          volumeMounts:
+            - name: agentadaptor-config
+              mountPath: /etc/agentadaptor/config.json
+              subPath: config.json
+              readOnly: true
+      volumes:
+        - name: agentadaptor-config
+          configMap:
+            name: {{ include "agenthub-gateway.fullname" . }}-agentadaptor
