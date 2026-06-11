@@ -1,16 +1,18 @@
+{{- $frontend := .Values.fullstack.frontend }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "agenthub-gateway.fullname" . }}
+  name: {{ include "agenthub-gateway.fullstackFrontendName" . }}
   labels:
     {{- include "agenthub-gateway.labels" . | nindent 4 }}
+    app.kubernetes.io/component: fullstack-frontend
 spec:
   type: ClusterIP
   ports:
     - name: http
-      port: {{ .Values.appConfig.gateway.port }}
+      port: {{ $frontend.port }}
       targetPort: http
       protocol: TCP
   selector:
     {{- include "agenthub-gateway.selectorLabels" . | nindent 4 }}
-    app.kubernetes.io/component: gateway
+    app.kubernetes.io/component: fullstack-frontend

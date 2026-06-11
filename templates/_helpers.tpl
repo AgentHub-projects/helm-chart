@@ -53,9 +53,77 @@ Namespace where Agent Sandbox extension resources live.
 Gateway container image.
 */}}
 {{- define "agenthub-gateway.image" -}}
-{{- if .Values.gateway.tag -}}
-{{- printf "%s:%s" .Values.gateway.image .Values.gateway.tag -}}
+{{- if .Values.appConfig.gateway.tag -}}
+{{- printf "%s:%s" .Values.appConfig.gateway.image .Values.appConfig.gateway.tag -}}
 {{- else -}}
-{{- .Values.gateway.image -}}
+{{- .Values.appConfig.gateway.image -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+ConfigMap used by the sandbox sidecar and sandbox container.
+*/}}
+{{- define "agenthub-gateway.sidecarConfigMapName" -}}
+{{- printf "%s-sidecar" (include "agenthub-gateway.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/*
+Fullstack frontend resource name.
+*/}}
+{{- define "agenthub-gateway.fullstackFrontendName" -}}
+{{- printf "%s-frontend" (include "agenthub-gateway.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/*
+Fullstack backend resource name.
+*/}}
+{{- define "agenthub-gateway.fullstackBackendName" -}}
+{{- printf "%s-backend" (include "agenthub-gateway.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/*
+Fullstack backend ConfigMap name.
+*/}}
+{{- define "agenthub-gateway.fullstackBackendConfigMapName" -}}
+{{- printf "%s-backend-env" (include "agenthub-gateway.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/*
+Fullstack backend Secret name.
+*/}}
+{{- define "agenthub-gateway.fullstackBackendSecretName" -}}
+{{- printf "%s-backend-secret" (include "agenthub-gateway.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/*
+Fullstack frontend container image.
+*/}}
+{{- define "agenthub-gateway.fullstackFrontendImage" -}}
+{{- if .Values.fullstack.frontend.tag -}}
+{{- printf "%s:%s" .Values.fullstack.frontend.image .Values.fullstack.frontend.tag -}}
+{{- else -}}
+{{- .Values.fullstack.frontend.image -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Fullstack backend container image.
+*/}}
+{{- define "agenthub-gateway.fullstackBackendImage" -}}
+{{- if .Values.fullstack.backend.tag -}}
+{{- printf "%s:%s" .Values.fullstack.backend.image .Values.fullstack.backend.tag -}}
+{{- else -}}
+{{- .Values.fullstack.backend.image -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Fullstack backend DATABASE_URL, defaulting to the chart's shared Postgres config.
+*/}}
+{{- define "agenthub-gateway.fullstackDatabaseUrl" -}}
+{{- if .Values.fullstack.backend.databaseUrl -}}
+{{- .Values.fullstack.backend.databaseUrl -}}
+{{- else -}}
+{{- printf "postgresql://%s:%s@%s:%v/%s?schema=public" .Values.appConfig.postgres.username .Values.appConfig.postgres.password .Values.appConfig.postgres.host .Values.appConfig.postgres.port .Values.appConfig.postgres.database -}}
 {{- end -}}
 {{- end }}

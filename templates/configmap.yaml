@@ -6,4 +6,4 @@ metadata:
     {{- include "agenthub-gateway.labels" . | nindent 4 }}
 data:
   config.yaml: |
-    {{- toYaml .Values.appConfig | nindent 4 }}
+    {{- omit .Values.appConfig "agentadaptor" | toYaml | nindent 4 }}

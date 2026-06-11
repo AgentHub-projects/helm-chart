@@ -1,0 +1,31 @@
+{{- $sidecar := .Values.sandboxTemplates.sandbox.sidecar -}}
+{{- $minio := .Values.appConfig.minio | default (.Values.appConfig.oss.minio | default dict) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "agenthub-gateway.sidecarConfigMapName" . }}
+  namespace: {{ include "agenthub-gateway.sandboxNamespace" . }}
+  labels:
+    {{- include "agenthub-gateway.labels" . | nindent 4 }}
+    sandbox: sandbox
+data:
+  AGENT_UID: "10001"
+  AGENT_GID: "10001"
+  SHARED_ROOT: "/sandbox"
+  CONTROL_ROOT: "/sandbox/control"
+  VIEWS_ROOT: "/sandbox/views"
+  POD_LABELS_FILE: "/etc/podmeta/labels"
+  CLAIM_WAIT_SECONDS: "0"
+  FLUSH_TIMEOUT_SECONDS: {{ $sidecar.flushTimeoutSeconds | toString | quote }}
+  REPO_ROOT: "/sandbox/views/workspace/repo"
+  WORKTREE_ROOT: "/sandbox/views/workspace/worktrees"
+  WORKSPACE_SOURCE_ROOT: "/workspace"
+  WORKSPACE_PATH_TEMPLATE: "sessions/${session_id}"
+  WORKSPACE_STORAGE_DRIVER: "minio"
+  MINIO_ENDPOINT: {{ $minio.endpoint | quote }}
+  MINIO_ACCESS_KEY: {{ $minio.accessKey | quote }}
+  MINIO_SECRET_KEY: {{ $minio.secretKey | quote }}
+  MINIO_BUCKET: {{ $minio.bucket | quote }}
+  MINIO_PREFIX: {{ $minio.prefix | quote }}
+  MINIO_USE_SSL: {{ $minio.useSSL | toString | quote }}
+  MINIO_CREATE_BUCKET: {{ $minio.createBucket | toString | quote }}

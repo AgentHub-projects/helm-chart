@@ -1,36 +1,106 @@
 pullSecret: "aliyun-acr-pull-secret"
-gateway:
-  image: crpi-wxtmmpsv7mbxgdvs.cn-hangzhou.personal.cr.aliyuncs.com/agenthub-dev/gateway
-  tag: "v0.1.0-dev.049cd18"
-  pullPolicy: Always
-  port: 8080
-
 ingressRoute:
   entryPoint: web
 
+fullstack:
+  frontend:
+    image: crpi-wxtmmpsv7mbxgdvs.cn-hangzhou.personal.cr.aliyuncs.com/agenthub-dev/frontend
+    tag: "v0.1.0-dev.20260610-3775c12"
+    pullPolicy: Always
+    replicas: 1
+    port: 80
+    env:
+      NEXT_PUBLIC_API_BASE_URL: ""
+    resources: {}
+  backend:
+    image: crpi-wxtmmpsv7mbxgdvs.cn-hangzhou.personal.cr.aliyuncs.com/agenthub-dev/backend
+    tag: "v0.1.0-dev.20260610-3775c12"
+    pullPolicy: Always
+    replicas: 1
+    port: 3001
+    redisUrl: "redis://redis-master.default.svc.cluster.local:6379"
+    configEnv:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3001"
+      AGENTHUB_REALTIME_SOCKET_PATH: /api/socket.io
+      AGENTHUB_PUBLIC_API_BASE_URL: /api
+      DOWNSTREAM_ORCHESTRATOR_WS_URL: "http://agenthub-gateway.default.svc.cluster.local:8080/acp"
+      OPENAI_BASE_URL: ""
+      OPENAI_COMPATIBLE_BASE_URL: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+      SUMMARY_BASE_URL: "https://api.deepseek.com"
+      CONTEXT_SUMMARY_MODEL: deepseek-v4-pro
+      CONTEXT_EMBEDDING_MODEL: text-embedding-v2
+      CONTEXT_TOKEN_BUDGET: "9000"
+      CONTEXT_RECENT_TOKEN_BUDGET: "4800"
+      CONTEXT_RETRIEVAL_LIMIT: "8"
+      VERCEL_TEAM_ID: ""
+      VERCEL_DEPLOY_ENV_KEYS: ""
+    secretEnv: 
+      DATABASE_URL: ""
+      REDIS_URL: ""
+      OPENAI_COMPATIBLE_API_KEY: ""
+      SUMMARY_API_KEY: ""
+      VERCEL_TOKEN: ""
+    resources: {}
+
 sandboxTemplates:
   sandbox:
-    image: registry.aliyuncs.com/google_containers/echoserver:1.10
+    image: crpi-wxtmmpsv7mbxgdvs.cn-hangzhou.personal.cr.aliyuncs.com/agenthub-dev/sandbox:v0.1.0
+    pullPolicy: Always
+    terminationGracePeriodSeconds: 90
+    sidecar:
+      image: crpi-wxtmmpsv7mbxgdvs.cn-hangzhou.personal.cr.aliyuncs.com/agenthub-dev/sidecar:v0.1.0-dev.ccc7e7f
+      pullPolicy: Always
+      flushTimeoutSeconds: 75
   agent:
-    image: registry.aliyuncs.com/google_containers/echoserver:1.10
+    image: crpi-wxtmmpsv7mbxgdvs.cn-hangzhou.personal.cr.aliyuncs.com/agenthub-dev/agentadaptor:v0.1.0-dev.202606101853-v2
 
 appConfig:
+  gateway:
+    image: crpi-wxtmmpsv7mbxgdvs.cn-hangzhou.personal.cr.aliyuncs.com/agenthub-dev/gateway
+    tag: "v0.1.0"
+    pullPolicy: Always
+    port: 8080
+  server:
+    gateway_address: ":8080"
+    backend_address: "http://115.33.108.104:3000"
   log_level: INFO
   agentadaptor:
     host: "0.0.0.0"
     port: 8080
-    workspaceRoot: "/workspace"
     logLevel: info
-    codexApiKey: ""
+    openCodeModel: ""
+    claudeApiKey: ""
     anthropicApiKey: ""
-    codexModel: ""
-    claudeModel: ""
+    anthropicBaseUrl: "https://pikachu.claudecode.love"
+    claudeModel: "claude-opus-4-7"
+    imageGenerationModel: "gpt-image-2-pro"
   postgres:
     host: postgresql.postgresql.svc.cluster.local
     port: 5432
     username: postgres
     password: "269302"
     database: agenthub
+    migrations_enabled: false
+  oss:
+    region: "oss-cn-hangzhou"
+    endpoint: "https://oss-cn-hangzhou.aliyuncs.com"
+    bucket: "juzi05"
+    publicDomain: "https://juzi05.oss-cn-hangzhou.aliyuncs.com"
+    artifactPrefix: agenthub/artifacts
+    accessKeyId: ""
+    accessKeySecret: ""
+  minio:
+    endpoint: minio.minio.svc.cluster.local:9000
+    accessKey: agenthub
+    secretKey: ''
+    bucket: agenthub-workspaces
+    prefix: sessions
+    useSSL: false
+    createBucket: true
+    namespace: minio
+    port: 9000
   sandbox:
     namespace: sandbox
     port: 8080

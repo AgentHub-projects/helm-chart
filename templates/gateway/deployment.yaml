@@ -4,6 +4,7 @@ metadata:
   name: {{ include "agenthub-gateway.fullname" . }}
   labels:
     {{- include "agenthub-gateway.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
 spec:
   replicas: 1
   selector:
@@ -11,8 +12,11 @@ spec:
       {{- include "agenthub-gateway.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
         {{- include "agenthub-gateway.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: gateway
     spec:
       serviceAccountName: {{ include "agenthub-gateway.fullname" . }}
       automountServiceAccountToken: true
@@ -23,13 +27,13 @@ spec:
       containers:
         - name: agenthub-gateway
           image: {{ include "agenthub-gateway.image" . | quote }}
-          imagePullPolicy: {{ .Values.gateway.pullPolicy }}
+          imagePullPolicy: {{ .Values.appConfig.gateway.pullPolicy }}
           args:
             - -config
             - /etc/agenthub-gateway/config.yaml
           ports:
             - name: http
-              containerPort: {{ .Values.gateway.port }}
+              containerPort: {{ .Values.appConfig.gateway.port }}
               protocol: TCP
           volumeMounts:
             - name: config

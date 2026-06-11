@@ -1,3 +1,5 @@
+{{- $sidecar := .Values.sandboxTemplates.sandbox.sidecar -}}
+{{- $minio := .Values.appConfig.minio | default (.Values.appConfig.oss.minio | default dict) -}}
 apiVersion: extensions.agents.x-k8s.io/v1alpha1
 kind: SandboxTemplate
 metadata:
@@ -7,15 +9,99 @@ metadata:
     {{- include "agenthub-gateway.labels" . | nindent 4 }}
     sandbox: sandbox
 spec:
+  networkPolicyManagement: Managed
+  networkPolicy:
+    ingress:
+      - from:
+          - podSelector:
+              matchLabels:
+                agent: agent
+        ports:
+          - protocol: TCP
+            port: {{ .Values.appConfig.sandbox.port }}
+    egress:
+      - to:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: kube-system
+            podSelector:
+              matchLabels:
+                k8s-app: kube-dns
+        ports:
+          - protocol: UDP
+            port: 53
+          - protocol: TCP
+            port: 53
+      - to:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: {{ $minio.namespace | quote }}
+        ports:
+          - protocol: TCP
+            port: {{ $minio.port }}
   podTemplate:
     metadata:
       labels:
         sandbox: sandbox
     spec:
+      dnsPolicy: ClusterFirst
+      {{- if .Values.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.pullSecret | quote }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.sandboxTemplates.sandbox.terminationGracePeriodSeconds }}
       containers:
         - name: sandbox
           image: {{ .Values.sandboxTemplates.sandbox.image | quote }}
+          imagePullPolicy: {{ .Values.sandboxTemplates.sandbox.pullPolicy | quote }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "agenthub-gateway.sidecarConfigMapName" . }}
           ports:
             - name: http
               containerPort: {{ .Values.appConfig.sandbox.port }}
               protocol: TCP
+          volumeMounts:
+            - name: vol-shared
+              mountPath: /sandbox
+              mountPropagation: HostToContainer
+        - name: sidecar
+          image: {{ $sidecar.image | quote }}
+          imagePullPolicy: {{ $sidecar.pullPolicy | quote }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "agenthub-gateway.sidecarConfigMapName" . }}
+          securityContext:
+            privileged: true
+            runAsUser: 0
+            runAsGroup: 0
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    mount | awk '$3 ~ "^/sandbox/views/" {print $3}' | sort -r | while read -r target; do
+                      umount -l "${target}" 2>/dev/null || true
+                    done
+          volumeMounts:
+            - name: vol-shared
+              mountPath: /sandbox
+              mountPropagation: Bidirectional
+            - name: vol-workspace
+              mountPath: /workspace
+            - name: vol-podmeta
+              mountPath: /etc/podmeta
+              readOnly: true
+      volumes:
+        - name: vol-shared
+          emptyDir: {}
+        - name: vol-workspace
+          emptyDir: {}
+        - name: vol-podmeta
+          downwardAPI:
+            items:
+              - path: labels
+                fieldRef:
+                  fieldPath: metadata.labels

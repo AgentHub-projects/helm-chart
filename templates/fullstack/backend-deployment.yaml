@@ -1,0 +1,54 @@
+{{- $backend := .Values.fullstack.backend }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "agenthub-gateway.fullstackBackendName" . }}
+  labels:
+    {{- include "agenthub-gateway.labels" . | nindent 4 }}
+    app.kubernetes.io/component: fullstack-backend
+spec:
+  replicas: {{ $backend.replicas }}
+  selector:
+    matchLabels:
+      {{- include "agenthub-gateway.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: fullstack-backend
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/fullstack/backend-configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/fullstack/backend-secret.yaml") . | sha256sum }}
+      labels:
+        {{- include "agenthub-gateway.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: fullstack-backend
+    spec:
+      {{- if .Values.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.pullSecret | quote }}
+      {{- end }}
+      containers:
+        - name: backend
+          image: {{ include "agenthub-gateway.fullstackBackendImage" . | quote }}
+          imagePullPolicy: {{ $backend.pullPolicy | quote }}
+          ports:
+            - name: http
+              containerPort: {{ $backend.port }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "agenthub-gateway.fullstackBackendConfigMapName" . }}
+            - secretRef:
+                name: {{ include "agenthub-gateway.fullstackBackendSecretName" . }}
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml $backend.resources | nindent 12 }}

@@ -8,11 +8,17 @@ metadata:
     {{- include "agenthub-gateway.labels" . | nindent 4 }}
     agent: agent
 spec:
+  networkPolicyManagement: Unmanaged
   podTemplate:
     metadata:
       labels:
         agent: agent
     spec:
+      dnsPolicy: ClusterFirst
+      {{- if .Values.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.pullSecret | quote }}
+      {{- end }}
       containers:
         - name: agent
           image: {{ .Values.sandboxTemplates.agent.image | quote }}

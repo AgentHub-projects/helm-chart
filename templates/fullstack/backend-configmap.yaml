@@ -1,0 +1,27 @@
+{{- $backend := .Values.fullstack.backend }}
+{{- $rawOss := .Values.appConfig.oss | default dict }}
+{{- $oss := $rawOss }}
+{{- if hasKey $rawOss "aliyun" }}
+{{- $oss = $rawOss.aliyun }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "agenthub-gateway.fullstackBackendConfigMapName" . }}
+  labels:
+    {{- include "agenthub-gateway.labels" . | nindent 4 }}
+    app.kubernetes.io/component: fullstack-backend
+data:
+  {{- $root := . }}
+  {{- range $key, $value := $backend.configEnv }}
+  {{- if and (eq $key "DOWNSTREAM_ORCHESTRATOR_WS_URL") (not $value) }}
+  {{ $key }}: {{ printf "http://%s:%v/acp" (include "agenthub-gateway.fullname" $root) $root.Values.appConfig.gateway.port | quote }}
+  {{- else }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  {{- end }}
+  ALIYUN_OSS_REGION: {{ $oss.region | default "" | quote }}
+  ALIYUN_OSS_ENDPOINT: {{ $oss.endpoint | default "" | quote }}
+  ALIYUN_OSS_BUCKET: {{ $oss.bucket | default "" | quote }}
+  ALIYUN_OSS_PUBLIC_DOMAIN: {{ $oss.publicDomain | default "" | quote }}
+  ARTIFACT_OSS_PREFIX: {{ $oss.artifactPrefix | default "agenthub/artifacts" | quote }}

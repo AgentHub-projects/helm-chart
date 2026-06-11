@@ -4,7 +4,9 @@ Service:
   {{ include "agenthub-gateway.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
 
 IngressRoute:
-  Uses Traefik entryPoint {{ .Values.ingressRoute.entryPoint | default "web" }} with routes for /socket.io and /filesystem.
+  Uses Traefik entryPoint {{ .Values.ingressRoute.entryPoint | default "web" }}.
+  Gateway routes: /socket.io, /filesystem.
+  Fullstack routes: /api -> backend, / -> frontend.
 
 Config:
   /etc/agenthub-gateway/config.yaml
